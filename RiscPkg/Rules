@@ -1,0 +1,29 @@
+VERSION = 0.89f-sdl-1
+PACKAGES = \
+ SDLThrust_$(VERSION)
+INSTALL_TO=Temp/Apps/Games
+
+all: build pkg
+
+build:
+	make -C !SDLThrust/source -fmakefile.riscos
+
+
+pkg:
+	rm -rf Temp
+	mkdir -p Temp/RiscPkg
+	cp RiscPkg/Control Temp/RiscPkg
+	mkdir -p $(INSTALL_TO)
+	cp -rf !SDLThrust  $(INSTALL_TO)/!SDLThrust
+	make -C Temp -f ../RiscPkg/Rules $(PACKAGES)
+	rm -rf Temp
+
+.PHONY: $(PACKAGES)
+$(PACKAGES): %:
+	riscpkg-gencontrol $(firstword $(subst _, ,$@)) < ../RiscPkg/Control > RiscPkg/Control
+	rm -f ../RiscPkg/$@
+	set StoreSuffix <UnixEnv$$zip$$sfix>
+	set UnixEnv$$zip$$sfix \"\"
+	zip -r ../RiscPkg/$@ * -i@../RiscPkg/$(firstword $(subst _, ,$@)).inc
+	set UnixEnv$$zip$$sfix <StoreSuffix>
+	unset StoreSuffix

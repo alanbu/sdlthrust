@@ -1,0 +1,221 @@
+/* SDL Support written by Alan Buckley
+   alan_baa@hotmail.com
+   16 Nov 2006
+*/
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <ctype.h>
+#include <string.h>
+#include <sys/signal.h>
+
+#include "thrust_t.h"
+#include "keyboard.h"
+#include "SDL/SDL.h"
+
+int scancode[8] = { 0, 0, 0, 0,
+                    0, 0, 0, 0 };
+
+ui8 keybits=0;
+
+void
+singlekey(void)
+{
+}
+
+void
+multiplekeys(void)
+{
+  keybits = 0;
+}
+
+int
+getonemultiplekey(void)
+{
+  int gotkey=0;
+  SDL_Event event;
+
+  do {
+    SDL_WaitEvent(&event);
+    switch(event.type) {
+	case SDL_KEYUP:
+      gotkey=event.key.keysym.sym;
+      break;
+	case SDL_QUIT:
+	  raise(SIGTERM);
+	  break;
+    }
+  } while(!gotkey);
+
+  return gotkey;
+}
+
+int
+getkey(void)
+{
+  int key=0;
+  SDL_Event event;
+  unsigned int mask;
+
+  while(SDL_PollEvent(&event)) {
+    switch(event.type) {
+    case SDL_KEYUP:
+      {
+	  key = event.key.keysym.sym;
+      switch(key) {
+      case SDLK_BACKSPACE:
+      case SDLK_DELETE:
+	      key = 127;
+	      break;
+      case SDLK_RETURN:
+      case SDLK_KP_ENTER:
+	      key = 10;
+	      break;
+      case SDLK_ESCAPE:
+  	      key = 27;
+	      break;
+      }
+      break;
+    case SDL_QUIT:
+	  raise(SIGTERM);
+      break;
+    }
+	}
+  }
+
+  return((key<0 || key>=256) ? 0 : key);
+}
+
+ui8
+getkeys(void)
+{
+  SDL_Event event;
+
+  while(SDL_PollEvent(&event)) {
+    switch(event.type) {
+	case SDL_KEYUP:
+		if (event.key.keysym.sym == scancode[0])
+			keybits &= ~left_bit;
+		if (event.key.keysym.sym == scancode[1])
+			keybits &= ~right_bit;
+		if (event.key.keysym.sym == scancode[2])
+			keybits &= ~thrust_bit;
+		if (event.key.keysym.sym == scancode[3])
+			keybits &= ~fire_bit;
+		if (event.key.keysym.sym == scancode[4])
+			keybits &= ~pickup_bit;
+		if (event.key.keysym.sym == scancode[5])
+			keybits &= ~pause_bit;
+		if (event.key.keysym.sym == scancode[6]
+		    || event.key.keysym.sym == scancode[7])
+			keybits &= ~escape_bit;
+		break;
+
+	case SDL_KEYDOWN:
+		if (event.key.keysym.sym == scancode[0])
+			keybits |= left_bit;
+		if (event.key.keysym.sym == scancode[1])
+			keybits |= right_bit;
+		if (event.key.keysym.sym == scancode[2])
+			keybits |= thrust_bit;
+		if (event.key.keysym.sym == scancode[3])
+			keybits |= fire_bit;
+		if (event.key.keysym.sym == scancode[4])
+			keybits |= pickup_bit;
+		if (event.key.keysym.sym == scancode[5])
+			keybits |= pause_bit;
+		if (event.key.keysym.sym == scancode[6]
+		    || event.key.keysym.sym == scancode[7])
+			keybits |= escape_bit;
+		break;
+
+    case SDL_QUIT:
+		raise(SIGTERM);
+        break;
+    }
+  }
+
+  return keybits;
+}
+
+char *
+keystring(int key)
+{
+  return SDL_GetKeyName(key);
+}
+
+int
+keycode(char *keyname)
+{
+  int key;
+  static char keybuffer[100];
+  int i;
+
+  strncpy(keybuffer, keyname, 99);
+  for(i=0; i<strlen(keybuffer); i++) {
+    if(keybuffer[i] == '_')
+      keybuffer[i] = ' ';
+  }
+
+  for (key = SDLK_FIRST; key <= SDLK_LAST; key++)
+  {
+	  if (stricmp(keybuffer, SDL_GetKeyName(key)) == 0)
+		  return key;
+  }
+
+  return 0;
+ }
+
+void
+flushkeyboard(void)
+{
+  SDL_Event event;
+
+  while(SDL_PollEvent(&event)) {};
+}
+
+int
+keywaiting(void)
+{
+  SDL_Event event;
+
+  SDL_PumpEvents();
+  return (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_EVENTMASK(SDL_KEYUP) | SDL_EVENTMASK(SDL_KEYDOWN)) > 0);
+}
+
+int
+keyinit(void)
+{
+  static SDLKey keys[8] = {
+    SDLK_a, SDLK_s, SDLK_RSHIFT, SDLK_RETURN, SDLK_SPACE, SDLK_p, SDLK_ESCAPE, SDLK_q };
+  int i;
+
+  for(i=0; i<8; i++) {
+    if(scancode[i] != 0)
+      i=9;
+  }
+  if(i==8) {
+    for(i=0; i<8; i++)
+      scancode[i] = keys[i];
+  }
+
+  multiplekeys();
+  return 0;
+}
+
+int
+keyclose(void)
+{
+  singlekey();
+  return 0;
+}
+
+char *
+keyname(void)
+{
+  static char name[] = "SDL";
+
+  return name;
+}
