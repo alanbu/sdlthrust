@@ -1,0 +1,10 @@
+To compile on RISC OS
+
+Optionally copy this directory to the !SDLThrust.
+
+Build the program with:
+
+  make -f makefile.riscos
+
+The SDLThrust executable will be put in the parent
+of this directory.

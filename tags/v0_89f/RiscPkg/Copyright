@@ -1,0 +1,10 @@
+Original version by Peter Ekberg.
+
+This is a conversion to RISC OS using the SDL library by Alan Buckley.
+
+This program is copyright under the GNU Public License (GPL), a copy
+of which may be found in /usr/share/common-licenses/GPL
+
+On RISC OS the common licenses can be found in
+the directory <CommonLicences$Dir>
+or downloaded from the URL: http://www.riscpkg.org/licences.

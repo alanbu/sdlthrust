@@ -1,0 +1,262 @@
+/* SDL Support written by Alan Buckley
+   alan_baa@hotmail.com
+   16 Nov 2006
+*/
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#include "SDL/sdl.h"
+#include <string.h>
+#include <stdio.h>
+
+#include "compat.h"
+#include "thrust.h"
+#include "fast_gr.h"
+#include "gr_drv.h"
+#include "options.h"
+
+SDL_Surface *screen = NULL;
+
+static int doublesize = 0;
+
+void
+clearscr(void)
+{
+  SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
+}
+
+void
+putarea(ui8 *source,
+	int x, int y, int width, int height, int bytesperline,
+	int destx, int desty)
+{
+  ui8 *src = source + y * bytesperline + x;
+  ui8 *dest;
+
+  if (SDL_MUSTLOCK(screen) && SDL_LockSurface(screen) < 0)
+  {
+	  return;
+  }
+
+  if (doublesize)
+  {
+     ui8 *dest2;
+     int w;
+     dest = screen->pixels + ((desty * screen->pitch + destx)<<1);
+     while(height--)
+     {
+       dest2 = dest + screen->pitch;
+       w = width;
+       while (w--)
+       {
+          *dest++=*src;
+          *dest++=*src;
+          *dest2++=*src;
+          *dest2++=*src++;
+       }
+       dest = dest2 + (screen->pitch - (width<<1));
+       src += (bytesperline-width);
+     }
+  } else
+  {
+    dest = screen->pixels + desty * screen->pitch + destx;
+    while(height--)
+    {
+       memcpy(dest,src,width);
+       dest+=screen->pitch;
+       src+=bytesperline;
+    }
+  }
+
+  if (SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
+}
+
+void
+putpixel(int x, int y, ui8 color)
+{
+  ui8 *dest;
+
+  if (SDL_MUSTLOCK(screen) && SDL_LockSurface(screen) < 0)
+  {
+	  return;
+  }
+  if (doublesize)
+  {
+    dest = screen->pixels + ((y * screen->pitch + x)<<1);
+    *dest++=color;
+    *dest=color;
+    dest+= screen->pitch-1;
+    *dest++=color;
+    *dest=color;
+  } else
+  {
+    dest = screen->pixels + y * screen->pitch + x;
+    *dest = color;
+  }
+
+  if (SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
+}
+
+void
+syncscreen(unsigned long us)
+{
+  if(us)
+    usleep(us);
+}
+
+void
+displayscreen(unsigned long us)
+{
+  static Uint32 last = 0;
+  Uint32 now;
+
+  if(us)
+    usleep(us);
+  SDL_Flip(screen);
+
+/* Simulate 50Hz update rate */
+  now = SDL_GetTicks();
+  if (now >= last && now < last + 20)
+  {
+     SDL_Delay(last+20-now);
+     last += 20;
+  } else
+     last = now + 10;
+}
+
+void
+fadepalette(int first, int last, ui8 *RGBtable, int fade, int flag)
+{
+  static SDL_Color tmpRGBtable[256];
+  int entries,i;
+  SDL_Color *c;
+  ui8 *d;
+  int used_first;
+  int used_entries=0;
+
+  entries=last-first+1;
+  used_first = color_lookup[first];
+  if(used_first == 0xff)
+    printf("Aiee, bad fadepalette call.\n");
+  c=tmpRGBtable;
+  d=RGBtable;
+  i=0;
+
+  while(i<entries) {
+    if(color_lookup[first+i] != 0xff) {
+      c->r = (Uint8)((((int)*d++) * fade) >> 6);
+      c->g = (Uint8)((((int)*d++) * fade) >> 6);
+      c->b = (Uint8)((((int)*d++) * fade) >> 6);
+      used_entries++;
+    }
+    else
+      d += 3;
+    if(++i<entries) {
+      if(color_lookup[first+i-1] != 0xff)
+        c++;
+    }
+  }
+
+  if(flag)
+    SDL_Flip(screen);
+
+  SDL_SetColors(screen, tmpRGBtable, first, used_entries);
+}
+
+void
+fade_in(unsigned long us)
+{
+  int i;
+
+  for(i=1; i<=64; i++)
+    fadepalette(0, 255, bin_colors, i, 1);
+
+  if(us)
+    usleep(us);
+}
+
+void
+fade_out(unsigned long us)
+{
+  int i;
+
+  if(us)
+    usleep(us);
+
+  for(i=64; i; i--)
+    fadepalette(0, 255, bin_colors, i, 1);
+  clearscr();
+  usleep(500000L);
+}
+
+
+void
+graphics_preinit(void)
+{
+}
+
+int
+graphicsinit(int argc, char **argv)
+{
+  int optc;
+  int flags = SDL_HWSURFACE|SDL_HWPALETTE;
+
+  if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE) < 0)
+  {
+	  printf("Unable to initialise video: %s\n", SDL_GetError());
+	  return -1;
+  }
+
+  optind=0;
+  do {
+    static struct option longopts[] = {
+      OPTS,
+      SDL_OPTS,
+      { 0, 0, 0, 0 }
+    };
+
+    optc=getopt_long_only(argc, argv, OPTC SDL_OPTC, longopts, (int *)0);
+    switch(optc) {
+    case '2':
+      doublesize=1;
+      break;
+    case 's':
+        flags = SDL_SWSURFACE;
+        break;
+    }
+  } while(optc != EOF);
+
+  screen = SDL_SetVideoMode((PUSEX)<<doublesize, (PUSEY+24)<<doublesize, 8, flags|SDL_FULLSCREEN);
+  if (screen == NULL)
+  {
+	  printf("Unable to Set %dx%d 256 colour video mode\n");
+	  return -1;
+  }
+
+  SDL_ShowCursor(SDL_FALSE);
+  fadepalette(0, 255, bin_colors, 1, 0);
+
+  return 0;
+}
+
+int
+graphicsclose(void)
+{
+  SDL_Quit();
+
+  return 0;
+}
+
+char *
+graphicsname(void)
+{
+  static char name[] = "SDL";
+
+  return name;
+}
