@@ -1,0 +1,46 @@
+# RISC OS Makefile using SDL as the backend
+
+CC=gcc
+LD=gcc
+
+CFLAGS=-O3 -I/SDL:include -DHAVE_CONFIG_H
+LDFLAGS=-L/SDL:lib -lSDL
+
+TARGET=../SDLThrust
+EXE=
+
+# Common files
+
+
+# SDL Backend
+SOURCES= src/thrust.c src/fast_gr.c src/hiscore.c \
+	src/conf.c src/things.c src/init.c src/level.c src/font5x5.c \
+	src/graphics.c src/compat.h src/conf.h src/fast_gr.h \
+	src/font5x5.h src/gr_drv.h src/graphics.h src/hiscore.h \
+	src/init.h src/keyboard.h src/level.h src/options.h \
+	src/sound.h src/soundIt.h src/things.h src/thrust.h \
+	src/thrust_t.h datasrc/blks.c datasrc/ship.c datasrc/shld.c \
+	datasrc/colors.c datasrc/bullet.c datasrc/title.c \
+	datasrc/demomove.c datasrc/level1.c datasrc/level2.c \
+	datasrc/level3.c datasrc/level4.c datasrc/level5.c \
+	datasrc/level6.c datasrc/font.c \
+ 	src/sdlkey.c src/sdl.c src/sdlsound.c \
+      datasrc/icon48.cdatasrc/blip.c \
+	datasrc/boom.c datasrc/boom2.c datasrc/harp.c datasrc/engine.c \
+	datasrc/zero.c src/silence.c
+
+OBJECTS=src/thrust.o src/fast_gr.o src/hiscore.o \
+	src/conf.o src/things.o src/init.o src/level.o src/font5x5.o \
+	src/graphics.o datasrc/blks.o datasrc/ship.o datasrc/shld.o \
+	datasrc/colors.o datasrc/bullet.o datasrc/title.o \
+	datasrc/demomove.o datasrc/level1.o datasrc/level2.o \
+	datasrc/level3.o datasrc/level4.o datasrc/level5.o \
+	datasrc/level6.o datasrc/font.o \
+ 	src/sdlkey.o src/sdl.o src/sdlsound.o \
+      datasrc/icon48.o datasrc/blip.o \
+	datasrc/boom.o datasrc/boom2.o datasrc/harp.o datasrc/engine.o \
+	datasrc/zero.o src/silence.o
+
+
+$(TARGET)$(EXE): $(OBJECTS)
+	$(LD) -o $(TARGET)$(EXE) $(LDFLAGS) $(OBJECTS)

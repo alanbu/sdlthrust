@@ -1,0 +1,7 @@
+| Run file for SDLThrust
+
+Wimpslot -min 1024K -max 1024K
+Set SDLThrust$Dir <Obey$Dir>
+
+| See Help file for more command line options
+Run <SDLThrust$Dir>.SDLThrust --double  >null: 2>null:

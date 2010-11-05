@@ -1,0 +1,189 @@
+/* SDL sound driver written by Alan Buckley
+   alan_baa@hotmail.com
+   16 Nov 2006
+*/
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#include "thrust_t.h"
+#include "sound.h"
+
+#include "SDL/SDL.h"
+
+/* Glue for thrust sound interface */
+
+#define SOUND_CHANNELS 4
+#define SAMPLE_RATE 11025
+
+static int S_num_sounds;
+static const sound_t *S_sounds;
+
+/* Structure for each channel */
+typedef struct {
+  ui8 *start, *current, *end;          /* ptr's into a playing sample  */
+  int len;                             /* length of sample in bytes    */
+  int loop;                            /* loop=0 : play sample once    */
+                                       /* loop=1 : loop sample         */
+} Channel;
+
+int *S_mix_buf = NULL;
+Channel S_channel[SOUND_CHANNELS];
+Uint8 S_silence;
+
+/* Function to mix the sound data
+   Format will be 8 bit unsigned.
+   SDL should convert it to the format it needs.
+*/
+static void mix_sound(void *userdata, Uint8 *stream, int len)
+{
+  int chan = 0;
+
+  while (chan < SOUND_CHANNELS && S_channel[chan].len == 0) chan++;
+  if (chan < SOUND_CHANNELS)
+  {
+	  int *mix_buf = S_mix_buf;
+	  int mix_len = len;
+	  Uint8 *mix_from = S_channel[chan].current;
+	  Uint8 *mix_end = S_channel[chan].end;
+
+	  /* First channel overwrites buffer */
+	  while (mix_len && mix_from != mix_end)
+	  {
+		 *mix_buf++ = *mix_from++;
+		 mix_len--;
+         if (mix_from == mix_end)
+		 {
+			 if (S_channel[chan].loop) mix_from = S_channel[chan].start;
+			 else S_channel[chan].len = 0;
+		 }
+	  }
+	  S_channel[chan].current = mix_from;
+
+	  /* End with silence */
+	  while (mix_len--) *mix_buf++ = S_silence;
+
+	  /* Following buffers mix data in */
+	  while (++chan < SOUND_CHANNELS)
+	  {
+		  if (S_channel[chan].len)
+		  {
+			  mix_buf = S_mix_buf;
+			  mix_len = len;
+			  mix_from = S_channel[chan].current;
+	          mix_end = S_channel[chan].end;
+
+	          while (mix_len && mix_from != mix_end)
+	          {
+		         *mix_buf++ += *mix_from++;
+		         mix_len--;
+		         if (mix_from == mix_end)
+				 {
+					 if (S_channel[chan].loop) mix_from = S_channel[chan].start;
+					 else S_channel[chan].len = 0;
+				 }
+			  }
+			  S_channel[chan].current = mix_from;
+		  }
+	  }
+
+	  /* Clip to final buffer */
+	  mix_buf = S_mix_buf;
+	  while (len--)
+	  {
+		  if (*mix_buf > 255) *stream++ = 255;
+		  else *stream++ = (Uint8)*mix_buf;
+		  mix_buf++;
+	  }
+  } else
+      /* No data so fill with silence */
+	  memset(stream, S_silence, len);
+}
+
+
+int
+sound_depends_on_graphics()
+{
+  /* Sound doesn't really depend on graphics, but
+     it seems neater to initialise it afterwards.
+  */
+  return 1;
+}
+
+int
+sound_init(const sound_t *sounds)
+{
+   SDL_AudioSpec spec;
+   int j;
+
+   if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) return -1;
+
+   spec.freq = SAMPLE_RATE;
+   spec.format = AUDIO_U8;
+   spec.channels = 1;
+   spec.samples = 512;
+   spec.callback = mix_sound;
+
+   if (SDL_OpenAudio(&spec, NULL) < 0) return -1;
+
+   S_num_sounds     = SOUND_SAMPLES;
+   S_sounds         = sounds;	/* array of sound samples*/
+
+   S_mix_buf = malloc(sizeof(Sint32) * spec.size);
+   if (S_mix_buf == NULL) return -1;
+
+   S_silence = spec.silence;
+
+   for (j = 0; j < SOUND_CHANNELS; j++)
+	   S_channel[j].len = 0;
+
+   SDL_PauseAudio(0);
+
+  return 0;
+}
+
+int
+sound_exit()
+{
+  SDL_QuitSubSystem(SDL_INIT_AUDIO);
+  free(S_mix_buf);
+  S_mix_buf = NULL;
+
+  return 0;
+}
+
+int
+sound_play(int sound, int channel)
+{
+  if (sound < 0 || sound >= S_num_sounds) return -1;
+
+  SDL_LockAudio();
+
+  S_channel[channel].start = S_sounds[sound].data;
+  S_channel[channel].current = S_sounds[sound].data;
+  S_channel[channel].len = S_sounds[sound].len;
+  S_channel[channel].end = S_sounds[sound].data + S_sounds[sound].len;
+  S_channel[channel].loop = S_sounds[sound].loop;
+
+  SDL_UnlockAudio();
+
+  return 0;
+}
+
+int
+sound_stop(int channel)
+{
+	SDL_LockAudio();
+	S_channel[channel].len = 0;
+	SDL_UnlockAudio();
+  return 0;
+}
+
+const char *
+sound_name(void)
+{
+  static char name[] = "SDL";
+
+  return name;
+}

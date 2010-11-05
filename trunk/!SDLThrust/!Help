@@ -1,0 +1,164 @@
+SDLThrust 0.89f-sdl
+-------------------
+
+This is a rewrite of Thrust, the classic BBC Micro and Commodore 64 game,
+to un*x, Windows and RISC OS.
+
+The object of the game is to lift the Klystron Pod from the bottom
+of a cave and return it safely to space. The Pod is very heavy
+(compared to the ship) and this makes it tougher than it may seem.
+
+You must be careful not to run out of fuel, crash into the cave
+walls, or let the enemy artillary outposts shoot you down.
+
+BACKGOUND STORY
+---------------
+
+The resistance is about to launch a major offensive against the Intergalactic
+Empire. In preparation for this, they have captured several battle-grade
+starships, but they lack the essential power sources for these formidable
+craft; Klystron Pods.
+
+You have been commissioned by resistance to steal these pods from the Empire's
+storage planets. Each planet is defended by a battery of Limpet Guns,
+powered by a Nuclear Power Plant. By firing shots at the power plant,
+the guns can be temporarily disabled; the more shots fired at the nuclear
+reactor, the longer the guns will take to recharge.
+
+BUT BEWARE!! If you fire too many shots at the reactor, it will become
+critical, giving you just ten seconds to clear the plantet before it is
+destroyed. If you have not already retrieved the pod stored at the planet,
+then you will have failed the mission. If you have retrieved the pod, and you
+manage to send the reactor into its critical phase, and leave the planet
+safely, you will receive a hefty bonus.
+
+OPTIONS
+-------
+
+Command line options:
+(on RISC OS modify the Run line in the !Run file)
+
+-h, --help     Print a usage message and exit with a non-zero status.
+-v, --version  Print version information on standard output, then exit.
+(both of the above options also require the >null and 2>null: lines
+ to be removed from the command line on RISC OS).
+
+-d, --nodemo   Do not run the demo which is otherwise displayed
+               if the game is left untouched.
+-e, --nosoundeffects
+               If sound is compiled in, be silent anyway.
+-c, --gamma=Value
+               Change the brightness of the colors. 1.0 is the default.
+               Higher values give brighter colors. The value must be
+               positive.
+-j, --jump     Only draw every third frame. This makes the game a lot faster.
+-2, --double   Double the size of the screen mode used (i.e.640x480) so that
+               most modern monitors don't show it in letter box format.
+-s, --software Use SDL software screen. Try this if the default Hardware
+               screen gives display problems.
+
+CONTROLS
+--------
+
+Note that the following keys are the default configuration. This can be
+changed by the user by creating a file named .thrustrc in the users home
+directory.
+
+A - Turn counterclockwise
+
+S - Turn clockwise
+
+Enter - Fire
+   Shoots a bullet. Different targets have different effect:
+
+   The Fuel Tank explodes for 150 points.
+
+   The Limpet guns explode for 750 points.
+
+   The Nuclear Power Plant can take a number of hits. When they are
+   destroyed you are given a short period of time to clear out before
+   the whole neighbourhood is nuked. If a Power Plant is hit - but
+   not destoyed - it will recover after a period of time. During this
+   recovery period, the Limpet guns are not able to fire. 2000 extra
+   points are scored if the Power Plant is destroyed when the level
+   is finished. There is exactly one Power Plant in every level.
+
+   In the more advanced levels you will find other things to shoot at.
+
+.Right-Shift - Thrust
+   Gives the ship a forward push at the cost of some fuel.
+
+Spacebar - Pick up and shield.
+   If the ship is above a Fuel Tank the ship is refueled, i.e the fuel
+   is picked up. Two vertical bars are drawn to indicate that fuel is
+   picked up. When there is no more fuel left in the tank, it disappears
+   and 300 points are scored.
+
+   If the ship is close to the Klystron Pod a connecting wire is drawn. The
+   Pod is picked up when the connecting wire is of the right
+   length. If spacebar is released before the correct distance is reached
+   the Pod is not picked up.
+
+   When the shield is activated, a circle is drawn around the ship. If
+   the ship is carrying the Pod, the Pod and the wire are also
+   protected by the shield. The shield costs fuel to power.
+
+ESC/Q - Quit the game
+
+P - Pause
+C - Continue a paused game
+
+FILES
+-----
+
+The following files are saved in the HOME directory.
+(Usually !UnixHome.home).
+
+sdlthrusths - highscore table
+thrustrc - keyboard configuration
+
+
+INSTALLATION/COMPATABILITY
+--------------------------
+
+This program is 32 bit compatible and requires RISCOS 3.6+.
+
+The SharedUnixLibrary module is requried and should be merged with
+your system modules. It is available from:
+http://www.riscos.info/downloads/gccsdk/sharedunixlib/system.zip
+
+Digital Renderer module must be installed for sound support. It is included
+in the above system.zip file.
+
+The !UnixHome application must have been seen by the filer.
+It is available from:
+http://www.riscos.info/unix/downloads/support/UnixHome-1.03.zip
+
+If the game display is incorrect on your screen try adding the
+  --software command line option
+
+If the game is too slow try one or more of the following command line
+options:
+  remove the --double option to use a 320x240 screen.
+  add the --jump option to skip frames
+  add the --nosoundeffects option to turn off the sound.
+
+
+AUTHORS
+-------
+
+Game by Peter Ekberg peda@lysator.liu.se.
+
+Original man page by Joey Hess joey@kitenet.net.
+
+RISC OS/SDL verison Alan Buckley alan_baa@hotmail.com
+
+Thanks go out to the authors of the original for the C64.
+
+
+DISTRIBUTION
+------------
+
+Thrust may be copied under the term of the Gnu General Public Licence.
+
+Source code for the RISC OS version should have been included with this application. See source/CHANGES for a list of the changes. If you received this via the RISC OS Packaging Project the source code is in the source repositry there.
