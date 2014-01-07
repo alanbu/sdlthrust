@@ -1,12 +1,13 @@
 Source: sdlthrust
-Version: 0.89f-sdl-1
+Version: 0.89f-sdl-2
 Section: Games
 Priority: Optional
 Maintainer: Alan Buckley <alan_baa@hotmail.com>
-Standards-Version: 0.1.0
+Standards-Version: 0.4.0
 Licence: Free
 Description: Rewrite of the classic Thrust game
  The object of the game is to lift the Klystron Pod from the bottom of a cave and return it safely to space.
+Components: Apps.Games.!SDLThrust (Movable)
 
 Package: SDLThrust
 Depends: SharedUnixLibrary, DRenderer
