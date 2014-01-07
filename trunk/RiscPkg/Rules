@@ -1,4 +1,4 @@
-VERSION = 0.89f-sdl-1
+VERSION = 0.89f-sdl-2
 PACKAGES = \
  SDLThrust_$(VERSION)
 INSTALL_TO=Temp/Apps/Games
@@ -13,8 +13,10 @@ pkg:
 	rm -rf Temp
 	mkdir -p Temp/RiscPkg
 	cp RiscPkg/Control Temp/RiscPkg
+	cp RiscPkg/Copyright Temp/RiscPkg
 	mkdir -p $(INSTALL_TO)
-	cp -rf !SDLThrust  $(INSTALL_TO)/!SDLThrust
+	svn export !SDLThrust  $(INSTALL_TO)/!SDLThrust
+	cp !SDLThrust/SDLThrust $(INSTALL_TO)/!SDLThrust
 	make -C Temp -f ../RiscPkg/Rules $(PACKAGES)
 	rm -rf Temp
 
@@ -24,6 +26,6 @@ $(PACKAGES): %:
 	rm -f ../RiscPkg/$@
 	set StoreSuffix <UnixEnv$$zip$$sfix>
 	set UnixEnv$$zip$$sfix \"\"
-	zip -r ../RiscPkg/$@ * -i@../RiscPkg/$(firstword $(subst _, ,$@)).inc
+	zip -r ^.RiscPkg.$(subst .,/,$@) * -i@^.RiscPkg.$(firstword $(subst _, ,$@))/inc
 	set UnixEnv$$zip$$sfix <StoreSuffix>
 	unset StoreSuffix

@@ -3,11 +3,11 @@
 CC=gcc
 LD=gcc
 
-CFLAGS=-O3 -I/SDL:include -DHAVE_CONFIG_H
-LDFLAGS=-L/SDL:lib -lSDL
+CFLAGS=-O3 -ISDL: -DHAVE_CONFIG_H
+LDFLAGS=-LSDL: -lSDL -static
 
-TARGET=../SDLThrust
-EXE=
+TARGET=^.SDLThrust
+TARGETELF=sdlthrustelf
 
 # Common files
 
@@ -24,10 +24,10 @@ SOURCES= src/thrust.c src/fast_gr.c src/hiscore.c \
 	datasrc/demomove.c datasrc/level1.c datasrc/level2.c \
 	datasrc/level3.c datasrc/level4.c datasrc/level5.c \
 	datasrc/level6.c datasrc/font.c \
- 	src/sdlkey.c src/sdl.c src/sdlsound.c \
-      datasrc/icon48.cdatasrc/blip.c \
+	src/sdlkey.c src/sdl.c src/sdlsound.c \
+	datasrc/icon48.cdatasrc/blip.c \
 	datasrc/boom.c datasrc/boom2.c datasrc/harp.c datasrc/engine.c \
-	datasrc/zero.c src/silence.c
+	datasrc/zero.c
 
 OBJECTS=src/thrust.o src/fast_gr.o src/hiscore.o \
 	src/conf.o src/things.o src/init.o src/level.o src/font5x5.o \
@@ -36,11 +36,13 @@ OBJECTS=src/thrust.o src/fast_gr.o src/hiscore.o \
 	datasrc/demomove.o datasrc/level1.o datasrc/level2.o \
 	datasrc/level3.o datasrc/level4.o datasrc/level5.o \
 	datasrc/level6.o datasrc/font.o \
- 	src/sdlkey.o src/sdl.o src/sdlsound.o \
-      datasrc/icon48.o datasrc/blip.o \
+	src/sdlkey.o src/sdl.o src/sdlsound.o \
+	datasrc/icon48.o datasrc/blip.o \
 	datasrc/boom.o datasrc/boom2.o datasrc/harp.o datasrc/engine.o \
-	datasrc/zero.o src/silence.o
+	datasrc/zero.o
 
+$(TARGET): $(TARGETELF)
+	elf2aif $(TARGETELF) $(TARGET)
 
-$(TARGET)$(EXE): $(OBJECTS)
-	$(LD) -o $(TARGET)$(EXE) $(LDFLAGS) $(OBJECTS)
+$(TARGETELF): $(OBJECTS)
+	$(LD) -o $(TARGETELF) $(LDFLAGS) $(OBJECTS)
